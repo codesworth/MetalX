@@ -17,30 +17,42 @@ class ViewController: UIViewController {
         static let ray = MTLClearColor(red: 0, green: 0.4, blue: 0.21, alpha: 1)
     }
     
-    var metalView:MTKView{
-        return view as! MTKView
-    }
-
+    @IBOutlet var metalView: MTKView!
+    
     var device:MTLDevice!
     var commandQueue:MTLCommandQueue!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        metalView = MTKView(frame: UIScreen.main.bounds)
+        self.view = metalView
         // Do any additional setup after loading the view.
         metalView.device = MTLCreateSystemDefaultDevice()
         device = metalView.device
         
         metalView.clearColor = Colors.ray
-        
+        metalView.delegate = self
         commandQueue = device.makeCommandQueue()
-        let c_buff = commandQueue.makeCommandBuffer()
         
-        let c_encoder = c_buff?.makeRenderCommandEncoder(descriptor: metalView.currentRenderPassDescriptor!)
-        c_encoder?.endEncoding()
-        c_buff?.present(metalView.currentDrawable!)
-        c_buff?.commit()
     }
 
 
 }
 
+
+extension ViewController:MTKViewDelegate{
+    
+    func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
+        //
+    }
+    
+    func draw(in view: MTKView) {
+        guard let drawable = view.currentDrawable, let descriptor = view.currentRenderPassDescriptor else {return}
+        let c_buff = commandQueue.makeCommandBuffer()
+        
+        let c_encoder = c_buff?.makeRenderCommandEncoder(descriptor: descriptor)
+        c_encoder?.endEncoding()
+        c_buff?.present(drawable)
+        c_buff?.commit()
+    }
+}
